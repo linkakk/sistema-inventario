@@ -15,6 +15,8 @@ backend/fiados-service/
 │   ├── repository/
 │   ├── service/
 │   └── config/
+          |-- FirebaseConfig.java
+          |__ FirebaseProperties.java
 └── src/main/resources/application.properties
 ```
 

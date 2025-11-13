@@ -1,46 +1,125 @@
 package com.panaderia.fiados.repository;
 
+import java.util.List;
 import java.util.Optional;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import com.panaderia.fiados.model.Fiado;
 
 /**
  * ============================================================
- * 📂 Repositorio: FiadoRepository
+ * 📂 Interfaz: FiadoRepository
  * ============================================================
  *
- * Interfaz encargada de la comunicación directa con la base de datos.
+ * Esta interfaz define el contrato que debe cumplir cualquier
+ * implementación del repositorio encargado de persistir fiados.
  *
- * Extiende de {@link JpaRepository}, lo cual proporciona automáticamente
- * un conjunto de operaciones CRUD (Create, Read, Update, Delete)
- * sobre la entidad {@link Fiado}.
+ * 🚫 IMPORTANTE:
+ * ------------------------------------------------------------
+ *  No extiende de JpaRepository ni usa JPA.
+ *  Esto se debe a que el microservicio FIADOS usa Firestore
+ *  (NoSQL), por lo que se requiere una implementación manual.
  *
- * Su responsabilidad es **persistir y recuperar datos** sin preocuparse
- * por la lógica de negocio.
+ *  Aun así, mantenemos la interfaz para cumplir principios de:
+ *  - arquitectura limpia
+ *  - inversión de dependencias (DIP)
+ *  - desacoplamiento entre dominio y persistencia
+ *  - capacidad de migrar a SQL en el futuro sin romper nada
+ * ------------------------------------------------------------
  *
- * Spring Data JPA se encarga de generar las implementaciones concretas
- * en tiempo de ejecución, por lo que no es necesario escribir código SQL
- * manualmente.
+ * 🔐 DUAL-KEY DOMAIN MODEL:
+ * ------------------------------------------------------------
+ *  - `numeroCelular` es la clave primaria *lógica* en Firestore.
+ *  - `id` (Long) se mantiene como clave primaria interna para
+ *    una futura migración a SQL sin rehacer los modelos.
+ * ------------------------------------------------------------
+ *
+ * Esta separación evita deuda técnica y permite escalar.
  */
-@Repository
-public interface FiadoRepository extends JpaRepository<Fiado, Long> {
+public interface FiadoRepository {
 
     /**
-     * Busca un registro de fiado por el nombre del cliente.
+     * Guarda o actualiza un fiado en el sistema.
      *
-     * Spring genera automáticamente la consulta a partir del nombre
-     * del método siguiendo la convención "findBy...".
+     * 📌 Firestore:
+     *      - Usa `numeroCelular` como ID del documento.
+     * 📌 SQL futuro:
+     *      - Usaría `id` como clave primaria (autoincremental).
+     *
+     * @param fiado objeto de dominio que se desea persistir.
+     * @return el mismo fiado, ya persistido.
+     */
+    Fiado save(Fiado fiado);
+
+    /**
+     * Busca un fiado por su ID interno (Long).
+     *
+     * ⚠️ En Firestore esto implica ejecutar una query where.
+     * ⚠️ En SQL sería un findById tradicional.
+     *
+     * Se mantiene este método SOLO para compatibilidad futura.
+     *
+     * @param id identificador interno único del fiado.
+     * @return Optional con el fiado encontrado o vacío si no existe.
+     */
+    Optional<Fiado> findById(Long id);
+
+    /**
+     * Busca un fiado usando el número de celular del cliente.
+     *
+     * ✅ En Firestore este valor ES el ID del documento.
+     *    → consulta instantánea, sin queries.
+     *
+     * Este método es el más eficiente y el que se usará
+     * principalmente en el flujo del negocio.
+     *
+     * @param numeroCelular teléfono del cliente.
+     * @return Optional con los datos del fiado o vacío.
+     */
+    Optional<Fiado> findByNumeroCelular(String numeroCelular);
+
+    /**
+     * Busca uno o varios fiados por nombre del cliente.
+     *
+     * 🔍 Nota:
+     * - Puede haber múltiples coincidencias para un mismo nombre.
+     * - Por eso retorna una lista.
+     *
+     * En Firestore esta operación sí implica una query.
      *
      * @param nombreCliente nombre del cliente a buscar.
-     * @return un {@link Optional} que puede contener el fiado si existe,
-     *         o estar vacío si no se encontró coincidencia.
+     * @return lista de fiados asociados a ese nombre.
      */
-    Optional<Fiado> findByNombreCliente(String nombreCliente);
+    List<Fiado> findByNombreCliente(String nombreCliente);
 
-    // 🧩 Ejemplo de futuras consultas personalizadas:
-    // Optional<Fiado> findByNumeroCelular(String numeroCelular);
-    // List<Fiado> findByActivoTrue();
+    /**
+     * Recupera todos los fiados registrados en el sistema.
+     *
+     * ⚠️ En Firestore esto obtiene TODOS los documentos
+     *    de la colección "fiados".
+     *
+     * @return lista completa de fiados.
+     */
+    List<Fiado> findAll();
+
+    /**
+     * Elimina un fiado usando el ID interno (Long).
+     *
+     * Como Firestore no elimina por query, este método debe:
+     *  1. Buscar el documento por ID interno.
+     *  2. Obtener el numeroCelular correspondiente.
+     *  3. Borrar por numeroCelular.
+     *
+     * @param id ID interno del registro.
+     */
+    void deleteById(Long id);
+
+    /**
+     * Elimina un fiado usando el número de celular.
+     *
+     * ✅ En Firestore esta es la forma NATURAL de borrar documentos,
+     * ya que numeroCelular es el ID del documento.
+     *
+     * @param numeroCelular número asociado al documento.
+     */
+    void deleteByNumeroCelular(String numeroCelular);
 }
