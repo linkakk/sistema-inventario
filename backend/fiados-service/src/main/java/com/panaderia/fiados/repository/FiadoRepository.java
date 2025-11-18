@@ -64,17 +64,17 @@ public interface FiadoRepository {
     Optional<Fiado> findById(Long id);
 
     /**
-     * Busca un fiado usando el número de celular del cliente.
-     *
-     * ✅ En Firestore este valor ES el ID del documento.
-     *    → consulta instantánea, sin queries.
-     *
-     * Este método es el más eficiente y el que se usará
-     * principalmente en el flujo del negocio.
-     *
-     * @param numeroCelular teléfono del cliente.
-     * @return Optional con los datos del fiado o vacío.
-     */
+ * Busca un fiado usando el número de celular.
+ *
+ * 🔎 Nota importante:
+ * - En nuestro modelo actual, numeroCelular NO es el ID del documento.
+ * - El documento usa un `firestoreId` tipo UUID.
+ * - Por eso esta operación SÍ requiere una query en Firestore.
+ *
+ * Este método sigue siendo necesario porque el número de celular
+ * es la clave lógica del fiador en este negocio.
+ */
+
     Optional<Fiado> findByNumeroCelular(String numeroCelular);
 
     /**
