@@ -62,14 +62,14 @@ public class FirestoreFiadoRepository implements FiadoRepository {
     // ============================================================
     // 🔵 Buscar por FirestoreId (ID real del documento)
     // ============================================================
-    /*@Override
+    @Override
     public Optional<Fiado> findById(Long id) {
         // ❌ Este método no está soportado todavía
         throw new UnsupportedOperationException(
             "findById(Long id) no está soportado en Firestore. " +
             "Este método existe solo para futura migración a SQL."
         );
-    }*/
+    }
 
     // ============================================================
     // 🔵 Buscar por numeroCelular (campo opcional)
