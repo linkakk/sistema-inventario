@@ -5,6 +5,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.panaderia.fiados.errors.AbonoInvalidoException;
+import com.panaderia.fiados.errors.AbonoSuperaDeudaException;
+import com.panaderia.fiados.errors.MontoInvalidoException;
 import com.panaderia.fiados.errors.ClienteBloqueadoException;
 import com.panaderia.fiados.errors.CuentaCerradaException;
 import com.panaderia.fiados.errors.FiadoSuperaLimiteException;
@@ -394,18 +397,17 @@ public class Fiado {
      */
     public void registrarAbono(Abono abono) {
         if (abono == null) {
-            throw new IllegalArgumentException("El abono no puede ser null.");
+            throw new AbonoInvalidoException();
         }
 
         double monto = abono.getMonto();
 
         if (monto <= 0) {
-            throw new IllegalArgumentException("El monto del abono debe ser mayor a 0.");
+            throw new MontoInvalidoException(monto);
         }
 
         if (monto > this.valorFiado) {
-            throw new IllegalArgumentException(
-                    "El monto del abono (" + monto + ") excede la deuda actual (" + this.valorFiado + ").");
+            throw new AbonoSuperaDeudaException(abono ,this.valorFiado);
         }
 
         // 1. Registrar en historial legado
