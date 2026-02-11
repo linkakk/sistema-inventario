@@ -5,6 +5,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.panaderia.fiados.errors.ClienteBloqueadoException;
+import com.panaderia.fiados.errors.CuentaCerradaException;
+import com.panaderia.fiados.errors.FiadoSuperaLimiteException;
+import com.panaderia.fiados.errors.LimiteInvalidoException;
+import com.panaderia.fiados.errors.NombreClienteObligatorioException;
 import com.panaderia.fiados.model.enums.EstadoFiado;
 import com.panaderia.fiados.model.enums.TipoMovimiento;
 
@@ -232,11 +237,11 @@ public class Fiado {
             double limiteFiadoInicial) {
 
         if (nombreCliente == null || nombreCliente.isBlank()) {
-            throw new IllegalArgumentException("El nombre del cliente es obligatorio.");
+            throw new NombreClienteObligatorioException();
         }
 
         if (limiteFiadoInicial <= 0) {
-            throw new IllegalArgumentException("El límite de fiado debe ser mayor a 0.");
+            throw new LimiteInvalidoException(limiteFiadoInicial);
         }
 
         Fiado fiado = new Fiado();
@@ -307,28 +312,38 @@ public class Fiado {
 
         // 1. Validaciones de estado de la cuenta
         if (cuentaCerrada) {
-            throw new IllegalArgumentException(
-                    "La cuenta se encuentra cerrada, no se pueden registrar nuevos fiados.");
-        }
+            throw new CuentaCerradaException(this.numeroCelular);}
 
         if (!activo) {
-            throw new IllegalArgumentException(
-                    "La cuenta está inactiva, no se pueden registrar nuevos fiados.");
-        }
+            throw new ClienteBloqueadoException(this.numeroCelular);}
+
+
+        // ============================================================
+        // 2) VALIDACIONES DE ENTRADA
+        // ====================================================
+    
 
         if (monto <= 0) {
-            throw new IllegalArgumentException(
-                    "El monto del fiado debe ser mayor a 0.");
-        }
+            throw new MontoInvalidoException(monto);}
 
-        // 2. Validar límite de crédito (si no hay aprobación admin)
+
+
+        // ============================================================
+        // 3) VALIDAR LÍMITE DE CRÉDITO
+        // ============================================================
+    
+
+        // Validar límite de crédito (si no hay aprobación admin)
         double nuevoTotal = this.valorFiado + monto;
+        
         if (nuevoTotal > this.limiteFiado && !this.aprobadoPorAdmin) {
-            throw new IllegalStateException(
-                    "El fiado supera el límite de crédito y la cuenta no está aprobada por administración.");
+            throw new FiadoSuperaLimiteException(nuevoTotal,this.limiteFiado);
         }
 
-        // 3. Crear el movimiento
+        // ============================================================
+        // 4) CREAR MOVIMIENTO
+        // ============================================================
+    
         MovimientoFiado movimiento = new MovimientoFiado();
         movimiento.setTipo(TipoMovimiento.FIADO);
         movimiento.setMonto(monto);

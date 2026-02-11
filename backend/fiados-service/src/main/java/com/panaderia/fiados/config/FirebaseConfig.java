@@ -26,20 +26,37 @@ public class FirebaseConfig {
         this.properties = properties;
     }
 
-    @PostConstruct
-    public void initFirebase() throws IOException {
-        try {
-            FileInputStream serviceAccount = new FileInputStream(properties.getCredentialsPath());
+  @PostConstruct
+public void initFirebase() {
+    // Evita re-inicializar si ya existe
+    if (!FirebaseApp.getApps().isEmpty()) {
+        System.out.println("ℹ️ Firebase ya estaba inicializado.");
+        return;
+    }
 
+    try {
+        // 1) Prioridad: variable de entorno (mejor práctica en prod)
+        String ruta = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
+
+        // 2) Fallback: application.properties
+        if (ruta == null || ruta.isBlank()) {
+            ruta = properties.getCredentialsPath();
+        }
+
+        System.out.println("🔍 Usando credenciales Firebase desde: " + ruta);
+
+        try (FileInputStream serviceAccount = new FileInputStream(ruta)) {
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .build();
 
             FirebaseApp.initializeApp(options);
-
-            System.out.println("✅ Firebase inicializado correctamente con ruta: " + properties.getCredentialsPath());
-        } catch (Exception e) {
-            System.err.println("❌ Error inicializando Firebase: " + e.getMessage());
         }
+
+        System.out.println("✅ Firebase inicializado correctamente.");
+    } catch (Exception e) {
+        System.err.println("❌ Error inicializando Firebase: " + e.getMessage());
     }
+}
+
 }
