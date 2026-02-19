@@ -2,6 +2,9 @@ package com.panaderia.fiados.model;
 
 import java.time.LocalDate;
 
+import com.panaderia.fiados.errors.AbonoInvalidoException;
+import com.panaderia.fiados.errors.MontoInvalidoException;
+
 import lombok.Getter;
 import lombok.ToString;
 
@@ -86,27 +89,21 @@ public class Abono {
         // Validación: monto
         // -------------------------
         if (monto <= 0) {
-            throw new IllegalArgumentException(
-                "El monto del abono debe ser mayor a 0."
-            );
+            throw new MontoInvalidoException(monto);
         }
 
         // -------------------------
         // Validación: fecha
         // -------------------------
         if (fecha == null) {
-            throw new IllegalArgumentException(
-                "La fecha del abono no puede ser null."
-            );
+            throw new AbonoInvalidoException();
         }
 
         // -------------------------
         // Validación: método de pago
         // -------------------------
         if (metodoPago != null && metodoPago.isBlank()) {
-            throw new IllegalArgumentException(
-                "El método de pago no puede estar vacío."
-            );
+            throw new AbonoInvalidoException();
         }
 
         // Opcional: Default
@@ -118,9 +115,7 @@ public class Abono {
         // Validación: registradoPor
         // -------------------------
         if (registradoPor != null && registradoPor.isBlank()) {
-            throw new IllegalArgumentException(
-                "El campo registradoPor no puede ser vacío si se envía."
-            );
+            throw new AbonoInvalidoException(); 
         }
 
         // -------------------------

@@ -16,17 +16,16 @@ import com.panaderia.fiados.model.Fiado;
 /**
  * ============================================================
  * 🔥 FirestoreFiadoRepository
+ * Repositorio profesional basado en Firestore
  * ------------------------------------------------------------
- * Repositorio profesional basado en Firestore.
- * - documentId YA NO depende del numeroCelular.
- * - usamos UUID para asegurar unicidad e inmutabilidad.
- * - numeroCelular es OPCIONAL y consultable.
- * - nombreCliente puede repetirse (casos reales).
- * - compatibilidad futura con SQL (campo Long id).
+ * - documentId YA NO depende del numeroCelular
+ * - usamos UUID para asegurar unicidad e inmutabilidad
+ * - numeroCelular es OPCIONAL y consultable
+ * - nombreCliente puede repetirse (casos reales)
+ * - compatibilidad futura con SQL (campo Long id)
  * ============================================================
  */
 @Repository
-@SuppressWarnings("null") // Evita advertencias por valores opcionales en Firestore
 public class FirestoreFiadoRepository implements FiadoRepository {
 
     private static final String COLLECTION = "fiados";
@@ -39,12 +38,12 @@ public class FirestoreFiadoRepository implements FiadoRepository {
     }
 
     // ============================================================
-    // 🔵 MÉTODO SAVE — crea o actualiza un documento
+    // 🔵 MÉTODO SAVE (crea o actualiza)
     // ============================================================
     @Override
     public Fiado save(Fiado fiado) {
 
-        // Si NO tiene firestoreId → es nuevo → generar UUID como documentId
+        // Si NO tiene ID → ES NUEVO → generar UUID como documentId
         if (fiado.getFirestoreId() == null || fiado.getFirestoreId().isBlank()) {
             String newId = UUID.randomUUID().toString();
             fiado.setFirestoreId(newId);
@@ -55,9 +54,21 @@ public class FirestoreFiadoRepository implements FiadoRepository {
                 .collection(COLLECTION)
                 .document(fiado.getFirestoreId());
 
-        ref.set(fiado); // operación asíncrona, no bloqueante
+        ref.set(fiado);
 
         return fiado;
+    }
+
+    // ============================================================
+    // 🔵 Buscar por FirestoreId (ID real del documento)
+    // ============================================================
+    @Override
+    public Optional<Fiado> findById(Long id) {
+        // ❌ Este método no está soportado todavía
+        throw new UnsupportedOperationException(
+            "findById(Long id) no está soportado en Firestore. " +
+            "Este método existe solo para futura migración a SQL."
+        );
     }
 
     // ============================================================
@@ -66,13 +77,13 @@ public class FirestoreFiadoRepository implements FiadoRepository {
     @Override
     public Optional<Fiado> findByNumeroCelular(String numeroCelular) {
 
-        // Validación: número opcional → si no hay dato, devolvemos vacío
+        // Validación: número opcional → no se debe romper
         if (numeroCelular == null || numeroCelular.isBlank()) {
             return Optional.empty();
         }
 
         try {
-            // Firestore NO usa numeroCelular como ID → se busca con una query
+            // Firestore NO usa numeroCelular como ID → buscamos por query
             var snap = db()
                 .collection(COLLECTION)
                 .whereEqualTo("numeroCelular", numeroCelular)
@@ -83,7 +94,6 @@ public class FirestoreFiadoRepository implements FiadoRepository {
                 return Optional.empty();
             }
 
-            // Devuelve el primer resultado (en Firestore pueden existir duplicados)
             return Optional.ofNullable(
                 snap.getDocuments().get(0).toObject(Fiado.class)
             );
@@ -96,7 +106,7 @@ public class FirestoreFiadoRepository implements FiadoRepository {
     }
 
     // ============================================================
-    // 🔵 Buscar por nombreCliente (puede haber varios)
+    // 🔵 Buscar por nombreCliente
     // ============================================================
     @Override
     public List<Fiado> findByNombreCliente(String nombreCliente) {
@@ -143,12 +153,12 @@ public class FirestoreFiadoRepository implements FiadoRepository {
     }
 
     // ============================================================
-    // 🔵 Eliminar por numeroCelular (seguro)
+    // 🔵 Eliminar por numeroCelular
     // ============================================================
     @Override
     public void deleteByNumeroCelular(String numeroCelular) {
 
-        // Buscar primero por query para obtener firestoreId
+        // Buscar primero por query
         var optional = findByNumeroCelular(numeroCelular);
 
         optional.ifPresent(f -> {
@@ -160,7 +170,7 @@ public class FirestoreFiadoRepository implements FiadoRepository {
     }
 
     // ============================================================
-    // 🔵 Eliminar por ID SQL (NO soportado aún)
+    // 🔵 Eliminar por ID SQL (NO soportado)
     // ============================================================
     @Override
     public void deleteById(Long id) {
@@ -169,21 +179,4 @@ public class FirestoreFiadoRepository implements FiadoRepository {
             "Eliminación debe ser por numeroCelular o firestoreId."
         );
     }
-
-    // ============================================================
-    // 🚫 findById — No implementado (migración futura a SQL)
-    // ============================================================
-    
-    @Override
-    public Optional<Fiado> findById(Long id) {
-        // Método reservado para compatibilidad con JPA/SQL
-        // Actualmente Firestore no usa este campo.
-        throw new UnsupportedOperationException(
-            "findById(Long id) no está soportado en Firestore. " +
-            "Use findByNumeroCelular() o findByNombreCliente()."
-        );
-    }
-
-    
-    
 }

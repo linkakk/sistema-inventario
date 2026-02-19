@@ -1,30 +1,22 @@
 package com.panaderia.fiados.model.enums;
 
 /**
- * ============================================================
- * 🔵 Enum: TipoMovimiento
- * ------------------------------------------------------------
- * Representa los tipos de movimientos que pueden ocurrir en la
- * cuenta de fiado de un cliente.
- * 
- * Usar un enum garantiza:
- *  - Opciones limitadas y controladas (no strings libres).
- *  - Seguridad en la lógica del negocio.
- *  - Facilidad para filtrar movimientos por tipo.
- *  - Evitar errores ortográficos o valores inválidos.
- * ============================================================
+ * Tipos de movimientos en una cuenta de fiado.
  */
 public enum TipoMovimiento {
 
-    /** Movimiento normal de fiado (el cliente saca productos). */
+    /** El cliente saca productos a crédito. */
     FIADO,
 
-    /** Corrección de un movimiento previo (rectificación). */
+    /** El cliente paga una parte o todo (abono). */
+    ABONO,
+
+    /** Corrección de un movimiento previo. */
     RECTIFICACION,
 
-    /** Anulación de un movimiento previo (error o fraude). */
+    /** Anulación de un movimiento previo. */
     ANULACION,
 
-    /** Ajuste manual administrativo (casos especiales). */
+    /** Ajuste manual administrativo (puede ser + o -). */
     AJUSTE
 }

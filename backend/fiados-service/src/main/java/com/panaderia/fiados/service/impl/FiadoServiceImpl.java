@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.panaderia.fiados.errors.CuentaNoExistenteException;
 import com.panaderia.fiados.model.Abono;
 import com.panaderia.fiados.model.Fiado;
 import com.panaderia.fiados.repository.FiadoRepository;
@@ -49,20 +50,23 @@ public class FiadoServiceImpl implements FiadoService {
     // ============================================================
     // 🔵 REGISTRAR FIADO
     // ============================================================
-    @Override
-    public Fiado registrarFiado(String numeroCelular, double monto, String descripcionMovimiento) {
+@Override
+public Fiado registrarFiado(String numeroCelular, double monto, String descripcionMovimiento) {
 
-        Fiado fiado = repository.findByNumeroCelular(numeroCelular)
-                .orElseThrow(() -> new IllegalArgumentException("No existe cuenta para ese número"));
+    Fiado fiado = repository.findByNumeroCelular(numeroCelular)
+            .orElseThrow(() -> new CuentaNoExistenteException(numeroCelular));
 
-        boolean aceptado = fiado.registrarFiado(monto, descripcionMovimiento);
+    fiado.registrarMovimientoFiado(
+            monto,
+            descripcionMovimiento,
+            "sistema",
+            "SISTEMA",
+            "BACKEND"
+    );
 
-        if (!aceptado) {
-            throw new IllegalStateException("El fiado fue rechazado por superar límite o estar inactivo.");
-        }
+    return repository.save(fiado);
+}
 
-        return repository.save(fiado);
-    }
 
     // ============================================================
     // 🔵 REGISTRAR ABONO

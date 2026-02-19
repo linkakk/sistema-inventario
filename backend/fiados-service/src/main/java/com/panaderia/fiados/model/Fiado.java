@@ -7,11 +7,11 @@ import java.util.List;
 
 import com.panaderia.fiados.errors.AbonoInvalidoException;
 import com.panaderia.fiados.errors.AbonoSuperaDeudaException;
-import com.panaderia.fiados.errors.MontoInvalidoException;
 import com.panaderia.fiados.errors.ClienteBloqueadoException;
 import com.panaderia.fiados.errors.CuentaCerradaException;
 import com.panaderia.fiados.errors.FiadoSuperaLimiteException;
 import com.panaderia.fiados.errors.LimiteInvalidoException;
+import com.panaderia.fiados.errors.MontoInvalidoException;
 import com.panaderia.fiados.errors.NombreClienteObligatorioException;
 import com.panaderia.fiados.model.enums.EstadoFiado;
 import com.panaderia.fiados.model.enums.TipoMovimiento;
@@ -315,10 +315,12 @@ public class Fiado {
 
         // 1. Validaciones de estado de la cuenta
         if (cuentaCerrada) {
-            throw new CuentaCerradaException(this.numeroCelular);}
+            throw new CuentaCerradaException(this.numeroCelular);
+        }
 
         if (!activo) {
-            throw new ClienteBloqueadoException(this.numeroCelular);}
+            throw new ClienteBloqueadoException(this.numeroCelular);
+        }
 
 
         // ============================================================
@@ -407,7 +409,8 @@ public class Fiado {
         }
 
         if (monto > this.valorFiado) {
-            throw new AbonoSuperaDeudaException(abono ,this.valorFiado);
+            throw new AbonoSuperaDeudaException(monto 
+                ,this.valorFiado);
         }
 
         // 1. Registrar en historial legado
@@ -417,7 +420,7 @@ public class Fiado {
         MovimientoFiado movimiento = new MovimientoFiado();
         movimiento.setTipo(TipoMovimiento.ABONO);
         movimiento.setMonto(monto);
-        movimiento.setDescripcion(abono.getDescripcion());
+        movimiento.setDescripcion("Abono (" + abono.getMetodoPago() + ")");
         movimiento.setRegistradoPor(abono.getRegistradoPor());
         movimiento.setRolUsuario("CAJERO"); // o derivado del contexto
         movimiento.setDispositivo("BACKEND");
